@@ -27,21 +27,18 @@ module AwsLogs
       @completed = nil
     end
 
-    # So the start and end time will limit results and make the API fast.
-    # 1. load all events from since time
-    # 2. after that load events from the last found event or time now now?
-    # 3. time now is even better
+    # The start and end time is useful to limit results and make the API fast.  We'll leverage it like so:
     #
-    # However, events can still be duplicated as events can be written to the exact same timestamp.
-    # So also track the last_shown_event_id and prevent duplicate log lines from re-appearing.
+    #     1. load all events from an initial since time
+    #     2. after that load events pass that first window
+    #
+    # It's a sliding window of time we're using.
     #
     def run
       since, now = initial_since, current_now
-      puts "end_loop? #{end_loop?.inspect}"
       while true && !end_loop?
         refresh_events(since, now)
         display
-        puts "=" * 30
         since, now = now, current_now
         loop_count!
         sleep 5 unless ENV["AWS_LOGS_TEST"]
@@ -52,7 +49,8 @@ module AwsLogs
       @events = []
       next_token = :start
 
-      # TODO: within this loop can hit throttle easily
+      # TODO: within this loop can hit throttle limit if there are logs of pages
+      # Maybe reverse the order and only grab must recent 100 lines or so.
       while next_token
         resp = cloudwatchlogs.filter_log_events(
           log_group_name: @log_group, # required
@@ -65,10 +63,34 @@ module AwsLogs
         next_token = resp.next_token
       end
 
-      puts "@events.size #{@events.size}"
       @events
     end
 
+    # Events canduplicated as events can be written to the exact same timestamp.
+    # So also track the last_shown_event_id and prevent duplicate log lines from re-appearing.
+    def display
+      new_events = @events
+      shown_index = new_events.find_index { |e| e.event_id == @last_shown_event_id }
+      if shown_index
+        new_events = @events[shown_index+1..-1] || []
+      end
+
+      new_events.each do |e|
+        time = Time.at(e.timestamp/1000).utc
+        say "#{time.to_s.color(:green)} #{e.log_stream_name.color(:purple)} #{e.message}"
+      end
+      @last_shown_event_id = @events.last&.event_id
+    end
+
+    def say(text)
+      ENV["AWS_LOGS_TEST"] ? @output << text : puts(text)
+    end
+
+    def output
+      @output.join("\n") + "\n"
+    end
+
+  private
     def initial_since
       (Time.now.to_i - 60*60*24*7) * 1000 # past 10 minutes in milliseconds
     end
@@ -91,32 +113,5 @@ module AwsLogs
       nil
     end
 
-    def display
-      puts "display:"
-      puts "@events: #{@events.inspect}"
-      new_events = @events
-      shown_index = new_events.find_index { |e| e.event_id == @last_shown_event_id }
-      if shown_index
-        new_events = @events[shown_index+1..-1] || []
-      end
-
-      new_events.each do |e|
-        time = Time.at(e.timestamp/1000).utc
-        say "#{time.to_s.color(:green)} #{e.log_stream_name.color(:purple)} #{e.message}"
-      end
-      @last_shown_event_id = @events.last&.event_id
-    end
-
-    def say(text)
-      if ENV["AWS_LOGS_TEST"]
-        @output << text
-      else
-        puts text
-      end
-    end
-
-    def output
-      @output.join("\n") + "\n"
-    end
   end
 end
