@@ -49,8 +49,7 @@ module AwsLogs
       @events = []
       next_token = :start
 
-      # TODO: within this loop can hit throttle limit if there are logs of pages
-      # Maybe reverse the order and only grab must recent 100 lines or so.
+      # TODO: can hit throttle limit if there are lots of pages
       while next_token
         resp = cloudwatchlogs.filter_log_events(
           log_group_name: @log_group, # required
