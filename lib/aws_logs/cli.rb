@@ -5,6 +5,7 @@ module AwsLogs
 
     desc "tail LOG_GROUP", "Tail the CloudWatch log group."
     long_desc Help.text(:tail)
+    option :since, desc: "From what time to begin displaying logs.  By  default, logs will be displayed starting from 10m in the past. The value provided can be an ISO 8601 timestamp or a relative time."
     def tail(log_group)
       Tail.new(options.merge(log_group: log_group)).run
     end

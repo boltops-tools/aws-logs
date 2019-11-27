@@ -2,24 +2,25 @@ require "active_support/core_ext/integer"
 
 module AwsLogs
   class Since
+    DEFAULT = 10.minutes.to_i
+
     def initialize(str)
       @str = str
-      @fallback = 10.minutes
     end
 
     def to_i
       number, unit = match(/(\d+)(\w+)/)
       unless number && unit
         puts warning
-        return @fallback
+        return DEFAULT
       end
 
       meth = shorthand(unit)
       if number.respond_to?(meth)
-        number.send(meth)
+        number.send(meth).to_i
       else
         puts warning
-        return @fallback
+        return DEFAULT
       end
     end
 

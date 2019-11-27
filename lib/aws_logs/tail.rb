@@ -6,7 +6,8 @@ module AwsLogs
 
     def initialize(options={})
       @options = options
-      @log_group = options[:log_group]
+      @log_group, @since = options[:log_group], options[:since]
+
       @loop_count = 0
       @output = [] # for specs
       reset
@@ -17,7 +18,8 @@ module AwsLogs
     def set_trap
       Signal.trap("INT") {
         puts "\nCtrl-C detected. Exiting..."
-        @@end_loop_signal = true
+        @@end_loop_signal = true  # delayed exit, usefu control loop flow though
+        exit # immediate exixt
       }
     end
 
@@ -91,7 +93,8 @@ module AwsLogs
 
   private
     def initial_since
-      (Time.now.to_i - 60*60*24*7) * 1000 # past 10 minutes in milliseconds
+      seconds = @since ? Since.new(@since).to_i : Since::DEFAULT
+      (Time.now.to_i - seconds) * 1000 # past 10 minutes in milliseconds
     end
 
     def current_now
