@@ -78,7 +78,9 @@ module AwsLogs
 
       new_events.each do |e|
         time = Time.at(e.timestamp/1000).utc
-        say "#{time.to_s.color(:green)} #{e.log_stream_name.color(:purple)} #{e.message}"
+        line = [time.to_s.color(:green), e.message]
+        line.insert(1, e.log_stream_name.color(:purple)) if @options[:format] == "detailed"
+        say line.join(' ')
       end
       @last_shown_event_id = @events.last&.event_id
     end
