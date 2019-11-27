@@ -16,8 +16,6 @@ describe AwsLogs::Tail do
     let(:tail) do
       tail = AwsLogs::Tail.new
       allow(tail).to receive(:cloudwatchlogs).and_return(cloudwatchlogs)
-      @out = []
-      allow(tail).to receive(:say) { |text| @out << text }
       tail
     end
     let(:cloudwatchlogs) do
@@ -34,9 +32,7 @@ describe AwsLogs::Tail do
     describe "tail" do
       it "run" do
         tail.run
-
-        text = @out.join("\n") + "\n"
-        expect(text).to eq(<<~EOL)
+        expect(tail.output).to eq(<<~EOL)
          2019-11-27 21:06:50 UTC stream-name message1
          2019-11-27 21:07:00 UTC stream-name message2
         EOL
@@ -50,19 +46,14 @@ describe AwsLogs::Tail do
       let(:tail) do
         tail = AwsLogs::Tail.new
         allow(tail).to receive(:refresh_events) do
-          puts "mocking refresh_events"
           tail.events = mock_response("spec/fixtures/typical/events-2.json").events
         end
-        @out = []
-        allow(tail).to receive(:say) { |text| @out << text }
         tail
       end
 
       it "run" do
         tail.run
-
-        text = @out.join("\n") + "\n"
-        expect(text).to eq(<<~EOL)
+        expect(tail.output).to eq(<<~EOL)
          2019-11-27 21:06:50 UTC stream-name message1
          2019-11-27 21:07:00 UTC stream-name message2
         EOL

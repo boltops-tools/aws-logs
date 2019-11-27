@@ -8,6 +8,7 @@ module AwsLogs
       @options = options
       @log_group = options[:log_group]
       @loop_count = 0
+      @output = [] # for specs
       reset
       set_trap
     end
@@ -107,7 +108,15 @@ module AwsLogs
     end
 
     def say(text)
-      puts text
+      if ENV["AWS_LOGS_TEST"]
+        @output << text
+      else
+        puts text
+      end
+    end
+
+    def output
+      @output.join("\n") + "\n"
     end
   end
 end
