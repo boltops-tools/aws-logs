@@ -20,7 +20,7 @@ Here's a couple of examples where the `LOG_GROUP=/aws/codebuild/demo`:
     aws-logs tail /aws/codebuild/demo --format simple
     aws-logs tail /aws/codebuild/demo --filter-pattern Wed
 
-* By default, the tail command **will** follow the logs.  To not follow use the `--no-follow` command.
+* By default, the tail command **will** follow the logs.  To not follow use the `--no-follow` option.
 * The default format is detailed. The detailed format includes the log stream name.
 
 ## Installation

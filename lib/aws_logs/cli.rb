@@ -8,6 +8,7 @@ module AwsLogs
     option :log_stream_names, type: :array, desc: "Filters the results to only logs from the log streams. Can only use log_stream_names or log_stream_name_prefix but not both."
     option :log_stream_name_prefix, desc: "Filters the results to include only events from log streams that have names starting with this prefix. Can only use log_stream_names or log_stream_name_prefix but not both."
     option :filter_pattern, desc: "The filter pattern to use. If not provided, all the events are matched"
+    option :follow_until, desc: "Exit out of the follow loop once this text is found."
     def tail(log_group)
       Tail.new(options.merge(log_group: log_group)).run
     end

@@ -19,7 +19,7 @@ module AwsLogs
       Signal.trap("INT") {
         puts "\nCtrl-C detected. Exiting..."
         @@end_loop_signal = true  # delayed exit, usefu control loop flow though
-        exit # immediate exixt
+        exit # immediate exit
       }
     end
 
@@ -48,7 +48,7 @@ module AwsLogs
         display
         since, now = now, current_now
         loop_count!
-        sleep 5 if @options[:follow] && !ENV["AWS_LOGS_TEST"]
+        sleep 5 if @options[:follow] && !@@end_loop_signal && !ENV["AWS_LOGS_TEST"]
       end
     end
 
@@ -93,6 +93,17 @@ module AwsLogs
         say line.join(' ')
       end
       @last_shown_event_id = @events.last&.event_id
+      check_follow_until!
+    end
+
+    def check_follow_until!
+      follow_until = @options[:follow_until]
+      return unless follow_until
+
+      messages = @events.map(&:message)
+      if messages.detect { |m| m.include?(follow_until) }
+        @@end_loop_signal = true
+      end
     end
 
     def say(text)
