@@ -7,6 +7,7 @@ module AwsLogs
     def initialize(options={})
       @options = options
       @log_group = options[:log_group]
+      @loop_count = 0
       reset
       set_trap
     end
@@ -47,7 +48,6 @@ module AwsLogs
     end
 
     def refresh_events(start_time, end_time)
-      puts "refresh_events called".color(:green)
       @events = []
       next_token = :start
 
@@ -59,9 +59,6 @@ module AwsLogs
           end_time: end_time,
           # limit: 10,
         )
-
-        # puts "resp:"
-        # pp resp
 
         @events += resp.events
         next_token = resp.next_token
@@ -79,14 +76,13 @@ module AwsLogs
       (Time.now.to_i) * 1000 # now in milliseconds
     end
 
-    @@loop_count = 0
     def end_loop?
       return true if @@end_loop_signal
-      max_loop_count && @@loop_count >= max_loop_count
+      max_loop_count && @loop_count >= max_loop_count
     end
 
     def loop_count!
-      @@loop_count += 1
+      @loop_count += 1
     end
 
     # Useful for specs
@@ -96,6 +92,7 @@ module AwsLogs
 
     def display
       puts "display:"
+      puts "@events: #{@events.inspect}"
       new_events = @events
       shown_index = new_events.find_index { |e| e.event_id == @last_shown_event_id }
       if shown_index
