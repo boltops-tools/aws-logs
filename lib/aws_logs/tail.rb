@@ -26,15 +26,17 @@ module AwsLogs
     end
 
     def refresh_events(start_time, end_time)
+      puts "refresh_events called"
       @events = []
       next_token = :start
 
+      # TODO: within this loop can hit throttle easily
       while next_token
         resp = cloudwatchlogs.filter_log_events(
           log_group_name: @log_group, # required
           start_time: start_time,
           end_time: end_time,
-          limit: 10,
+          # limit: 10,
         )
         @events += resp.events
         next_token = resp.next_token
@@ -67,15 +69,22 @@ module AwsLogs
         display
         puts "=" * 30
         since, now = now, current_now
-        sleep 1
+        sleep 5
       end
     end
 
     def display
-      @events.each do |e|
+      new_events = @events
+      shown_index = new_events.find_index { |e| e.event_id == @last_shown_event_id }
+      if shown_index
+        new_events = @events[shown_index+1..-1] || []
+      end
+
+      new_events.each do |e|
         time = Time.at(e.timestamp/1000).utc
         puts "#{time.to_s.color(:green)} #{e.log_stream_name.color(:purple)} #{e.message}"
       end
+      @last_shown_event_id = @events.last&.event_id
     end
   end
 end
