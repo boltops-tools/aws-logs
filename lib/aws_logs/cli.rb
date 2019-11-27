@@ -3,12 +3,10 @@ module AwsLogs
     class_option :verbose, type: :boolean
     class_option :noop, type: :boolean
 
-    desc "hello NAME", "Say hello to NAME."
-    long_desc Help.text(:hello)
-    option :from, desc: "from person"
-    def hello(name="you")
-      puts "from: #{options[:from]}" if options[:from]
-      puts "Hello #{name}"
+    desc "tail LOG_GROUP", "Tail the CloudWatch log group."
+    long_desc Help.text(:tail)
+    def tail(log_group)
+      Tail.new(options.merge(log_group: log_group)).run
     end
 
     desc "completion *PARAMS", "Prints words for auto-completion."
