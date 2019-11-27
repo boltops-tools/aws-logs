@@ -5,7 +5,10 @@ module AwsLogs
 
     desc "tail LOG_GROUP", "Tail the CloudWatch log group."
     long_desc Help.text(:tail)
-    option :since, desc: "From what time to begin displaying logs.  By  default, logs will be displayed starting from 10m in the past. The value provided can be an ISO 8601 timestamp or a relative time."
+    option :since, desc: "From what time to begin displaying logs.  Bydefault, logs will be displayed starting from 10m in the past. The value provided can be an ISO 8601 timestamp or a relative time."
+    option :follow, default: true, type: :boolean, desc: " Whether to continuously poll for new logs. To exit from this mode, use Control-C."
+    option :format, default: "detailed", desc: "The format to display the logs. IE: detailed or short.  With detailed, the log stream name is also shown."
+    option :filter_pattern, desc: "The filter pattern to use. If not provided, all the events are matched"
     def tail(log_group)
       Tail.new(options.merge(log_group: log_group)).run
     end

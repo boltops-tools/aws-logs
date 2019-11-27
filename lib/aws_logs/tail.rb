@@ -6,7 +6,7 @@ module AwsLogs
 
     def initialize(options={})
       @options = options
-      @log_group, @since = options[:log_group], options[:since]
+      @log_group = options[:log_group]
 
       @loop_count = 0
       @output = [] # for specs
@@ -43,7 +43,7 @@ module AwsLogs
         display
         since, now = now, current_now
         loop_count!
-        sleep 5 unless ENV["AWS_LOGS_TEST"]
+        sleep 5 if @options[:follow] && !ENV["AWS_LOGS_TEST"]
       end
     end
 
@@ -93,7 +93,8 @@ module AwsLogs
 
   private
     def initial_since
-      seconds = @since ? Since.new(@since).to_i : Since::DEFAULT
+      since = @options[:since]
+      seconds = since ? Since.new(since).to_i : Since::DEFAULT
       (Time.now.to_i - seconds) * 1000 # past 10 minutes in milliseconds
     end
 
@@ -112,8 +113,7 @@ module AwsLogs
 
     # Useful for specs
     def max_loop_count
-      nil
+      @options[:follow] ? nil : 1
     end
-
   end
 end
