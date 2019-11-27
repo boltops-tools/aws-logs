@@ -2,7 +2,7 @@
   "events": [
     {
       "log_stream_name": "stream-name",
-      "timestamp": 1574840742704,
+      "timestamp": 1574888810000,
       "message": "message1",
       "event_id": "event1"
     }

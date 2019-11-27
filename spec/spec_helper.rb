@@ -23,7 +23,7 @@ module Helper
     ENV['DEBUG'] || ENV['SHOW_COMMAND']
   end
 
-  def mock_response(file)
+  def mock_response(file, next_token: nil)
     data = JSON.load(IO.read(file))
     events = data["events"].map do |e|
       Aws::CloudWatchLogs::Types::FilteredLogEvent.new(
@@ -35,7 +35,7 @@ module Helper
     end
     Aws::CloudWatchLogs::Types::FilterLogEventsResponse.new(
       events: events,
-      next_token: data["next_token"],
+      next_token: next_token,
     )
   end
 end
