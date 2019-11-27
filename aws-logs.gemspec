@@ -8,10 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = AwsLogs::VERSION
   spec.authors       = ["Tung Nguyen"]
   spec.email         = ["tongueroo@gmail.com"]
-  spec.summary       = "Generated with cli-template tool. Please write a gem summary"
-  spec.description   = "Generated with cli-template tool. Write a longer description or delete this line."
-  spec.homepage      = "https://github.com/USERNAME/aws-logs" # TODO: changeme
-  spec.license       = ""
+  spec.summary       = "Tail AWS CloudWatch Logs"
+  spec.homepage      = "https://github.com/tongueroo/aws-logs"
+  spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
   spec.bindir        = "exe"
