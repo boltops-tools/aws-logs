@@ -22,6 +22,22 @@ module Helper
   def show_command?
     ENV['DEBUG'] || ENV['SHOW_COMMAND']
   end
+
+  def mock_response(file)
+    data = JSON.load(IO.read(file))
+    events = data["events"].map do |e|
+      Aws::CloudWatchLogs::Types::FilteredLogEvent.new(
+        log_stream_name: e["log_stream_name"],
+        timestamp: e["timestamp"],
+        message: e["message"],
+        event_id: e["event_id"],
+      )
+    end
+    Aws::CloudWatchLogs::Types::FilterLogEventsResponse.new(
+      events: events,
+      next_token: data["next_token"],
+    )
+  end
 end
 
 RSpec.configure do |c|

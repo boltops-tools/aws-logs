@@ -1,0 +1,23 @@
+{
+  "events": [
+    {
+      "log_stream_name": "stream-name",
+      "timestamp": 1574840742704,
+      "message": "message1",
+      "event_id": "event1"
+    },
+    {
+      "log_stream_name": "stream-name",
+      "timestamp": 1574840742705,
+      "message": "message2",
+      "event_id": "event2"
+    },
+    {
+      "log_stream_name": "stream-name",
+      "timestamp": 1574840742706,
+      "message": "message3",
+      "event_id": "event3"
+    }
+  ],
+  "next_token": 4
+}
