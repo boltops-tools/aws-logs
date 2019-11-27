@@ -37,6 +37,11 @@ module AwsLogs
     # It's a sliding window of time we're using.
     #
     def run
+      if ENV['AWS_LOGS_NOOP']
+        puts "Noop test"
+        return
+      end
+
       since, now = initial_since, current_now
       while true && !end_loop?
         refresh_events(since, now)
@@ -83,7 +88,8 @@ module AwsLogs
       new_events.each do |e|
         time = Time.at(e.timestamp/1000).utc
         line = [time.to_s.color(:green), e.message]
-        line.insert(1, e.log_stream_name.color(:purple)) if @options[:format] == "detailed"
+        format = @options[:format] || "detailed"
+        line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
         say line.join(' ')
       end
       @last_shown_event_id = @events.last&.event_id
