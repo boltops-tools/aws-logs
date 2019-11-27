@@ -53,12 +53,16 @@ module AwsLogs
 
       # TODO: can hit throttle limit if there are lots of pages
       while next_token
-        resp = cloudwatchlogs.filter_log_events(
+        options = {
           log_group_name: @log_group, # required
           start_time: start_time,
           end_time: end_time,
           # limit: 10,
-        )
+        }
+        options[:log_stream_names] = @options[:log_stream_names] if @options[:log_stream_names]
+        options[:log_stream_name_prefix] = @options[:log_stream_name_prefix] if @options[:log_stream_name_prefix]
+        options[:filter_pattern] = @options[:filter_pattern] if @options[:filter_pattern]
+        resp = cloudwatchlogs.filter_log_events(options)
 
         @events += resp.events
         next_token = resp.next_token
