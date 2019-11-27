@@ -1,20 +1,27 @@
 # AwsLogs
 
 [![Gem Version](https://badge.fury.io/rb/GEMNAME.png)](http://badge.fury.io/rb/GEMNAME)
-[![CircleCI](https://circleci.com/gh/USER/REPO.svg?style=svg)](https://circleci.com/gh/USER/REPO)
-[![Dependency Status](https://gemnasium.com/USER/REPO.png)](https://gemnasium.com/USER/REPO)
-[![Coverage Status](https://coveralls.io/repos/USER/REPO/badge.png)](https://coveralls.io/r/USER/REPO)
-[![Join the chat at https://gitter.im/USER/REPO](https://badges.gitter.im/USER/REPO.svg)](https://gitter.im/USER/REPO?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Support](https://img.shields.io/badge/get-support-blue.svg)](https://boltops.com?utm_source=badge&utm_medium=badge&utm_campaign=aws-logs)
 
-TODO: Write a gem description
+[![BoltOps Badge](https://img.boltops.com/boltops/badges/boltops-badge.png)](https://www.boltops.com)
+
+Tail AWS CloudWatch Logs.
 
 ## Usage
 
-    aws-logs hello yourname
-    aws-logs sub:goodbye yourname
+    aws-logs tail LOG_GROUP
 
-The CLI tool also detects and tasks in the current folder's Rakefile and delegate to those tasks.
+## Examples
+
+More examples:
+
+    aws-logs tail /aws/codebuild/demo --since 60m
+    aws-logs tail /aws/codebuild/demo --since "2018-08-08 08:00:00"
+    aws-logs tail /aws/codebuild/demo --no-follow
+    aws-logs tail /aws/codebuild/demo --format simple
+    aws-logs tail /aws/codebuild/demo --filter-pattern Wed
+
+* By default, the tail command **will** follow the logs.  To not follow use the `--no-follow` command.
+* The default format is detailed. The detailed format includes the log stream name.
 
 ## Installation
 
