@@ -36,13 +36,16 @@ module AwsLogs
       end
 
       since, now = initial_since, current_now
-      while true && !end_loop?
+      until end_loop?
         refresh_events(since, now)
         display
         since, now = now, current_now
         loop_count!
         sleep 5 if @follow && !@@end_loop_signal && !ENV["AWS_LOGS_TEST"]
       end
+      # Refresh and display a final time in case the end_loop gets interrupted by stop_follow!
+      refresh_events(since, now)
+      display
     rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
       puts "ERROR: #{e.class}: #{e.message}".color(:red)
       puts "Log group #{@log_group_name} not found."
