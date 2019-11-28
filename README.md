@@ -12,7 +12,7 @@ Tail AWS CloudWatch Logs.
 
 ## Examples
 
-Here's a couple of examples where the `LOG_GROUP=/aws/codebuild/demo`:
+Here's a couple of examples where `LOG_GROUP=/aws/codebuild/demo`:
 
     aws-logs tail /aws/codebuild/demo --since 60m
     aws-logs tail /aws/codebuild/demo --since "2018-08-08 08:00:00"
