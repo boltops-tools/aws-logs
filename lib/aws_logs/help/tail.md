@@ -42,3 +42,16 @@ Since supports these formats:
 * w - weeks
 
 Since does not current support combining the formats. IE: 5m30s.
+
+## Filter Pattern
+
+The `--filter-pattern` option is quite powerful as CloudWatch supports a full
+[Filter and Pattern Syntax](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html).
+
+To match terms with spaces in it, you'll need quotes around it. Otherise, the match will be an OR of the terms. Example:
+
+    aws-logs tail /aws/codebuild/demo --filter-pattern '"Wed Nov 27 23"' --since 3h --no-follow
+
+Here's an example of matching with an exclude patter using the `-` (minus sign).
+
+    aws-logs tail /aws/codebuild/demo --filter-pattern '"ERROR" - "Exiting"' --since 3h --no-follow

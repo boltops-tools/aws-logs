@@ -114,6 +114,10 @@ module AwsLogs
       @output.join("\n") + "\n"
     end
 
+    def self.stop_follow!
+      @@end_loop_signal = true
+    end
+
   private
     def initial_since
       since = @options[:since]
