@@ -41,7 +41,7 @@ module AwsLogs
         display
         since, now = now, current_now
         loop_count!
-        sleep 5 if @follow && !@@end_loop_signal && !ENV["AWS_LOGS_TEST"]
+        sleep 5 if @follow && !ENV["AWS_LOGS_TEST"]
       end
       # Refresh and display a final time in case the end_loop gets interrupted by stop_follow!
       refresh_events(since, now)
@@ -100,9 +100,7 @@ module AwsLogs
       return unless follow_until
 
       messages = @events.map(&:message)
-      if messages.detect { |m| m.include?(follow_until) }
-        @@end_loop_signal = true
-      end
+      @@end_loop_signal = messages.detect { |m| m.include?(follow_until) }
     end
 
     def say(text)
@@ -113,15 +111,14 @@ module AwsLogs
       @output.join("\n") + "\n"
     end
 
-    @@end_loop_signal = false
     def set_trap
       Signal.trap("INT") {
         puts "\nCtrl-C detected. Exiting..."
-        @@end_loop_signal = true  # useful to control loop
         exit # immediate exit
       }
     end
 
+    @@end_loop_signal = false
     def self.stop_follow!
       @@end_loop_signal = true
     end
