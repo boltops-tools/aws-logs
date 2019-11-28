@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 This project *tries* to adhere to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.3.2]
+- #1 clean up end_loop_signal logic
+
 ## [0.3.1]
 - fix --no-follow option
 
