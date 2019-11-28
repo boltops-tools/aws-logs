@@ -8,7 +8,7 @@ module AwsLogs
       @options = options
       @log_group_name = options[:log_group_name]
       # Setting to ensure matches default CLI option
-      @follow = @options[:follow] || true
+      @follow = @options[:follow].nil? ? true : @options[:follow]
 
       @loop_count = 0
       @output = [] # for specs
