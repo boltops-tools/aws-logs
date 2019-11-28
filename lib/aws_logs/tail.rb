@@ -43,6 +43,9 @@ module AwsLogs
         loop_count!
         sleep 5 if @follow && !@@end_loop_signal && !ENV["AWS_LOGS_TEST"]
       end
+    rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
+      puts "ERROR: #{e.class}: #{e.message}".color(:red)
+      puts "Log group #{@log_group_name} not found."
     end
 
     def refresh_events(start_time, end_time)
