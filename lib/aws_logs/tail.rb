@@ -16,15 +16,6 @@ module AwsLogs
       set_trap
     end
 
-    @@end_loop_signal = false
-    def set_trap
-      Signal.trap("INT") {
-        puts "\nCtrl-C detected. Exiting..."
-        @@end_loop_signal = true  # delayed exit, usefu control loop flow though
-        exit # immediate exit
-      }
-    end
-
     def reset
       @events = [] # constantly replaced with recent events
       @last_shown_event_id = nil
@@ -114,6 +105,15 @@ module AwsLogs
 
     def output
       @output.join("\n") + "\n"
+    end
+
+    @@end_loop_signal = false
+    def set_trap
+      Signal.trap("INT") {
+        puts "\nCtrl-C detected. Exiting..."
+        @@end_loop_signal = true  # useful to control loop
+        exit # immediate exit
+      }
     end
 
     def self.stop_follow!

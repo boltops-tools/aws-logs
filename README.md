@@ -1,4 +1,4 @@
-# AwsLogs
+# aws-logs
 
 [![Gem Version](https://badge.fury.io/rb/GEMNAME.png)](http://badge.fury.io/rb/GEMNAME)
 
@@ -25,15 +25,7 @@ Here's a couple of examples where `LOG_GROUP=/aws/codebuild/demo`:
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem "aws-logs"
-
-And then execute:
-
-    bundle
-
-Or install it yourself as:
+Install with:
 
     gem install aws-logs
 
