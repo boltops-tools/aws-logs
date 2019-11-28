@@ -6,7 +6,9 @@ module AwsLogs
 
     def initialize(options={})
       @options = options
-      @log_group = options[:log_group]
+      @log_group_name = options[:log_group_name]
+      # Setting to ensure matches default CLI option
+      @follow = @options[:follow] || true
 
       @loop_count = 0
       @output = [] # for specs
@@ -48,7 +50,7 @@ module AwsLogs
         display
         since, now = now, current_now
         loop_count!
-        sleep 5 if @options[:follow] && !@@end_loop_signal && !ENV["AWS_LOGS_TEST"]
+        sleep 5 if @follow && !@@end_loop_signal && !ENV["AWS_LOGS_TEST"]
       end
     end
 
@@ -59,7 +61,7 @@ module AwsLogs
       # TODO: can hit throttle limit if there are lots of pages
       while next_token
         options = {
-          log_group_name: @log_group, # required
+          log_group_name: @log_group_name, # required
           start_time: start_time,
           end_time: end_time,
           # limit: 10,
@@ -140,7 +142,7 @@ module AwsLogs
 
     # Useful for specs
     def max_loop_count
-      @options[:follow] ? nil : 1
+      @follow ? nil : 1
     end
   end
 end
