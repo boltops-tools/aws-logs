@@ -52,6 +52,6 @@ To match terms with spaces in it, you'll need quotes around it. Otherise, the ma
 
     aws-logs tail /aws/codebuild/demo --filter-pattern '"Wed Nov 27 23"' --since 3h --no-follow
 
-Here's an example of matching with an exclude patter using the `-` (minus sign).
+Here's an example of matching with an exclude pattern using the `-` (minus sign).
 
     aws-logs tail /aws/codebuild/demo --filter-pattern '"ERROR" - "Exiting"' --since 3h --no-follow
