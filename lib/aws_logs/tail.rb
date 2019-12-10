@@ -35,11 +35,15 @@ module AwsLogs
         return
       end
 
+      # We overlap the sliding window because CloudWatch logs can receive or send the logs out of order.
+      # For example, a bunch of logs can all come in at the same second, but they haven't registered to CloudWatch logs
+      # yet. If we don't overlap the sliding window then we'll miss the logs that were delayed in registering.
+      overlap = 60*1000 # overlap the sliding window by a minute
       since, now = initial_since, current_now
       until end_loop?
         refresh_events(since, now)
         display
-        since, now = now, current_now
+        since, now = now-overlap, current_now
         loop_count!
         sleep 5 if @follow && !ENV["AWS_LOGS_TEST"]
       end
@@ -118,6 +122,9 @@ module AwsLogs
       }
     end
 
+    # The stop_follow! results in a little waiting because it signals to break the polling loop.
+    # Since it's in the middle of the loop process, the loop will finish the sleep 5 first.
+    # So it can pause from 0-5 seconds.
     @@end_loop_signal = false
     def self.stop_follow!
       @@end_loop_signal = true
