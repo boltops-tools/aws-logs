@@ -1,6 +1,6 @@
 # aws-logs
 
-[![Gem Version](https://badge.fury.io/rb/GEMNAME.png)](http://badge.fury.io/rb/GEMNAME)
+[![Gem Version](https://badge.fury.io/rb/aws-logs.png)](http://badge.fury.io/rb/aws-logs)
 
 [![BoltOps Badge](https://img.boltops.com/boltops/badges/boltops-badge.png)](https://www.boltops.com)
 
