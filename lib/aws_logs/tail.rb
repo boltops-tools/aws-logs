@@ -65,11 +65,13 @@ module AwsLogs
           log_group_name: @log_group_name, # required
           start_time: start_time,
           end_time: end_time,
-          # limit: 10,
+          # limit: 1000,
+          # interleaved: true,
         }
         options[:log_stream_names] = @options[:log_stream_names] if @options[:log_stream_names]
         options[:log_stream_name_prefix] = @options[:log_stream_name_prefix] if @options[:log_stream_name_prefix]
         options[:filter_pattern] = @options[:filter_pattern] if @options[:filter_pattern]
+        options[:next_token] = next_token if next_token != :start && !next_token.nil?
         resp = cloudwatchlogs.filter_log_events(options)
 
         @events += resp.events
