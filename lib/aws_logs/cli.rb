@@ -13,6 +13,14 @@ module AwsLogs
       Tail.new(options.merge(log_group_name: log_group_name)).run
     end
 
+    desc "streams LOG_GROUP", "Show the log group stream names. Limits on only one page of results."
+    long_desc Help.text(:streams)
+    option :descending, desc: "True by default if order-by is LastEventTime, false if order-by is LogStreamName"
+    option :order_by, default: "LastEventTime", desc: "accepts LogStreamName, LastEventTime"
+    def streams(log_group_name)
+      Streams.new(options.merge(log_group_name: log_group_name)).run
+    end
+
     desc "completion *PARAMS", "Prints words for auto-completion."
     long_desc Help.text(:completion)
     def completion(*params)

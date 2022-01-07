@@ -1,12 +1,9 @@
 require "json"
 
 module AwsLogs
-  class Tail
-    include AwsServices
-
+  class Tail < Base
     def initialize(options={})
-      @options = options
-      @log_group_name = options[:log_group_name]
+      super
       # Setting to ensure matches default CLI option
       @follow = @options[:follow].nil? ? true : @options[:follow]
 
@@ -14,6 +11,15 @@ module AwsLogs
       @output = [] # for specs
       reset
       set_trap
+    end
+
+    def data(since="1d")
+      since, now = Since.new(since).to_i, current_now
+      resp = filter_log_events(since, now)
+      resp.events
+    rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
+      puts "WARN: #{e.class}: #{e.message}"
+      []
     end
 
     def reset
@@ -61,19 +67,7 @@ module AwsLogs
 
       # TODO: can hit throttle limit if there are lots of pages
       while next_token
-        options = {
-          log_group_name: @log_group_name, # required
-          start_time: start_time,
-          end_time: end_time,
-          # limit: 1000,
-          # interleaved: true,
-        }
-        options[:log_stream_names] = @options[:log_stream_names] if @options[:log_stream_names]
-        options[:log_stream_name_prefix] = @options[:log_stream_name_prefix] if @options[:log_stream_name_prefix]
-        options[:filter_pattern] = @options[:filter_pattern] if @options[:filter_pattern]
-        options[:next_token] = next_token if next_token != :start && !next_token.nil?
-        resp = cloudwatchlogs.filter_log_events(options)
-
+        resp = filter_log_events(start_time, end_time, next_token)
         @events += resp.events
         next_token = resp.next_token
       end
@@ -81,7 +75,24 @@ module AwsLogs
       @events
     end
 
-    # Events canduplicated as events can be written to the exact same timestamp.
+    def filter_log_events(start_time, end_time, next_token=nil)
+      options = {
+        log_group_name: @log_group_name, # required
+        start_time: start_time,
+        end_time: end_time,
+        # limit: 1000,
+        # interleaved: true,
+      }
+
+      options[:log_stream_names] = @options[:log_stream_names] if @options[:log_stream_names]
+      options[:log_stream_name_prefix] = @options[:log_stream_name_prefix] if @options[:log_stream_name_prefix]
+      options[:filter_pattern] = @options[:filter_pattern] if @options[:filter_pattern]
+      options[:next_token] = next_token if next_token != :start && !next_token.nil?
+
+      cloudwatchlogs.filter_log_events(options)
+    end
+
+    # There can be duplicated events as events can be written to the exact same timestamp.
     # So also track the last_shown_event_id and prevent duplicate log lines from re-appearing.
     def display
       new_events = @events
@@ -95,7 +106,7 @@ module AwsLogs
         line = [time.to_s.color(:green), e.message]
         format = @options[:format] || "detailed"
         line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
-        say line.join(' ')
+        say line.join(' ') unless @options[:silence]
       end
       @last_shown_event_id = @events.last&.event_id
       check_follow_until!
