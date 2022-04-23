@@ -13,12 +13,12 @@ module AwsLogs
       set_trap
     end
 
-    def data(since="1d")
+    def data(since="1d", quiet_not_found=false)
       since, now = Since.new(since).to_i, current_now
       resp = filter_log_events(since, now)
       resp.events
     rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
-      puts "WARN: #{e.class}: #{e.message}"
+      puts "WARN: #{e.class}: #{e.message}" unless quiet_not_found
       []
     end
 
