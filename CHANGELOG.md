@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 This project *tries* to adhere to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.4.1] - 2022-04-23
+- [#4](https://github.com/tongueroo/aws-logs/pull/4) quiet not found option
+
 ## [0.4.0] - 2022-01-07
 - [#3](https://github.com/tongueroo/aws-logs/pull/3) streams cli command and data method
 - fix activesupport require
