@@ -61,6 +61,7 @@ module AwsLogs
       puts "Log group #{@log_group_name} not found."
     end
 
+    # TODO: lazy Enum or else its seems stuck for long --since
     def refresh_events(start_time, end_time)
       @events = []
       next_token = :start
