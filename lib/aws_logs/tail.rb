@@ -6,6 +6,7 @@ module AwsLogs
       super
       # Setting to ensure matches default CLI option
       @follow = @options[:follow].nil? ? true : @options[:follow]
+      @refresh_rate = @options[:refresh_rate] || 5
 
       @loop_count = 0
       @output = [] # for specs
@@ -51,7 +52,7 @@ module AwsLogs
         display
         since, now = now-overlap, current_now
         loop_count!
-        sleep 5 if @follow && !ENV["AWS_LOGS_TEST"]
+        sleep @refresh_rate if @follow && !ENV["AWS_LOGS_TEST"]
       end
       # Refresh and display a final time in case the end_loop gets interrupted by stop_follow!
       refresh_events(since, now)
