@@ -13,8 +13,10 @@ module AwsLogs
       def setup
         loader = Zeitwerk::Loader.new
         loader.inflector = Inflector.new
-        loader.push_dir(File.dirname(__dir__)) # lib
-        loader.ignore("#{File.dirname(__dir__)}/aws-logs.rb")
+        lib = File.dirname(__dir__) # lib
+        loader.push_dir(lib)
+        loader.do_not_eager_load("#{lib}/aws_logs/core_ext")
+        loader.ignore("#{lib}/aws-logs.rb")
         loader.setup
       end
     end
