@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 This project *tries* to adhere to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [0.5.0] - 2023-11-22
+- [#5](https://github.com/tongueroo/aws-logs/pull/5) add options: refresh_rate and wait_exists
+- alias File.exists?
+- update tail desc
+
 ## [0.4.1] - 2022-04-23
 - [#4](https://github.com/tongueroo/aws-logs/pull/4) quiet not found option
 
