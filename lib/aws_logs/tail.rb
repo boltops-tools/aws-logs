@@ -6,6 +6,9 @@ module AwsLogs
       super
       # Setting to ensure matches default CLI option
       @follow = @options[:follow].nil? ? true : @options[:follow]
+      @refresh_rate = @options[:refresh_rate] || 5
+      @wait_exists = @options[:wait_exists]
+      @wait_exists_retries = @options[:wait_exists_retries]
 
       @loop_count = 0
       @output = [] # for specs
@@ -46,17 +49,27 @@ module AwsLogs
       # yet. If we don't overlap the sliding window then we'll miss the logs that were delayed in registering.
       overlap = 60*1000 # overlap the sliding window by a minute
       since, now = initial_since, current_now
+      @wait_retries ||= 0
       until end_loop?
         refresh_events(since, now)
         display
         since, now = now-overlap, current_now
         loop_count!
-        sleep 5 if @follow && !ENV["AWS_LOGS_TEST"]
+        sleep @refresh_rate if @follow && !ENV["AWS_LOGS_TEST"]
       end
       # Refresh and display a final time in case the end_loop gets interrupted by stop_follow!
       refresh_events(since, now)
       display
     rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
+      if @wait_exists
+        seconds = 5
+        puts "Waiting for log group #{@log_group_name} to exist. Waiting #{seconds} seconds."
+        sleep seconds
+        @wait_retries += 1
+        if !@wait_exists_retries || @wait_retries < @wait_exists_retries
+          retry
+        end
+      end
       puts "ERROR: #{e.class}: #{e.message}".color(:red)
       puts "Log group #{@log_group_name} not found."
     end
