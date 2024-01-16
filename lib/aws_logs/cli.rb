@@ -4,7 +4,7 @@ module AwsLogs
     long_desc Help.text(:tail)
     option :since, desc: "From what time to begin displaying logs.  By default, logs will be displayed starting from 10m in the past. The value provided can be an ISO 8601 timestamp or a relative time. Examples: 10m 2d 2w"
     option :follow, default: true, type: :boolean, desc: " Whether to continuously poll for new logs. To exit from this mode, use Control-C."
-    option :format, default: "detailed", desc: "The format to display the logs. IE: detailed or short.  With detailed, the log stream name is also shown."
+    option :format, default: "detailed", desc: "The format to display the logs. IE: detailed, short, plain.  With detailed, the log stream name is also shown. Plain is the simplest andd does not show the timestamp or log stream name."
     option :log_stream_names, type: :array, desc: "Filters the results to only logs from the log streams. Can only use log_stream_names or log_stream_name_prefix but not both."
     option :log_stream_name_prefix, desc: "Filters the results to include only events from log streams that have names starting with this prefix. Can only use log_stream_names or log_stream_name_prefix but not both."
     option :filter_pattern, desc: "The filter pattern to use. If not provided, all the events are matched"

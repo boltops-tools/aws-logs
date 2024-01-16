@@ -6,7 +6,7 @@ module AwsLogs
       super
       # Setting to ensure matches default CLI option
       @follow = @options[:follow].nil? ? true : @options[:follow]
-      @refresh_rate = @options[:refresh_rate] || 5
+      @refresh_rate = @options[:refresh_rate] || 2
       @wait_exists = @options[:wait_exists]
       @wait_exists_retries = @options[:wait_exists_retries]
 
@@ -39,11 +39,6 @@ module AwsLogs
     # It's a sliding window of time we're using.
     #
     def run
-      if ENV['AWS_LOGS_NOOP']
-        puts "Noop test"
-        return
-      end
-
       # We overlap the sliding window because CloudWatch logs can receive or send the logs out of order.
       # For example, a bunch of logs can all come in at the same second, but they haven't registered to CloudWatch logs
       # yet. If we don't overlap the sliding window then we'll miss the logs that were delayed in registering.
@@ -53,7 +48,12 @@ module AwsLogs
       until end_loop?
         refresh_events(since, now)
         display
-        since, now = now-overlap, current_now
+
+        # @last_shown_event.timestamp changes and creates a "sliding window"
+        # The overlap is a just in case buffer
+        since = @last_shown_event ? @last_shown_event.timestamp - overlap : initial_since
+        now = current_now
+
         loop_count!
         sleep @refresh_rate if @follow && !ENV["AWS_LOGS_TEST"]
       end
@@ -107,22 +107,22 @@ module AwsLogs
     end
 
     # There can be duplicated events as events can be written to the exact same timestamp.
-    # So also track the last_shown_event_id and prevent duplicate log lines from re-appearing.
+    # So also track the last_shown_event and prevent duplicate log lines from re-appearing.
     def display
       new_events = @events
-      shown_index = new_events.find_index { |e| e.event_id == @last_shown_event_id }
+      shown_index = new_events.find_index { |e| e.event_id == @last_shown_event&.event_id }
       if shown_index
         new_events = @events[shown_index+1..-1] || []
       end
 
       new_events.each do |e|
-        time = Time.at(e.timestamp/1000).utc
-        line = [time.to_s.color(:green), e.message]
+        time = Time.at(e.timestamp/1000).utc.to_s.color(:green) unless @options[:format] == "plain"
+        line = [time, e.message].compact
         format = @options[:format] || "detailed"
         line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
         say line.join(' ') unless @options[:silence]
       end
-      @last_shown_event_id = @events.last&.event_id
+      @last_shown_event = @events.last
       check_follow_until!
     end
 
