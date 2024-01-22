@@ -20,7 +20,14 @@ module AwsLogs
 
     def default_logger
       logger = ActiveSupport::Logger.new($stdout)
-      logger.formatter = ActiveSupport::Logger::SimpleFormatter.new # no timestamps
+      # Note: The ActiveSupport::Logger::SimpleFormatter always adds a newline
+      # This adds a lot of extra lines to the output.
+      # It's slightly different behavior than puts which only adds a newline if
+      # it's not there. We want the the simpler puts behavior.
+      logger.formatter = proc { |severity, timestamp, progname, msg|
+        msg = "#{msg}\n" unless msg.end_with?("\n")
+        "#{msg}"
+      }
       logger.level = ENV['AWS_LOGS_LOG_LEVEL'] || :info
       logger
     end
@@ -169,9 +176,8 @@ module AwsLogs
     # For backwards compatibility. This is not thread-safe.
     @@global_end_loop_signal = false
     def self.stop_follow!
-      raise "stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
-      # puts "WARN: AwsLogs::Tail.stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
-      # @@global_end_loop_signal = true
+      logger.info "WARN: AwsLogs::Tail.stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
+      @@global_end_loop_signal = true
     end
 
   private
