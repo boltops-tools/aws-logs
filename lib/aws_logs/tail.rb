@@ -2,6 +2,7 @@ require "json"
 
 module AwsLogs
   class Tail < Base
+    attr_reader :logger
     def initialize(options={})
       super
       # Setting to ensure matches default CLI option
@@ -9,6 +10,7 @@ module AwsLogs
       @refresh_rate = @options[:refresh_rate] || 2
       @wait_exists = @options[:wait_exists]
       @wait_exists_retries = @options[:wait_exists_retries]
+      @logger = @options[:logger] || default_logger # separate logger instance for thread-safety
 
       @loop_count = 0
       @output = [] # for specs
@@ -16,12 +18,19 @@ module AwsLogs
       set_trap
     end
 
+    def default_logger
+      logger = ActiveSupport::Logger.new($stdout)
+      logger.formatter = ActiveSupport::Logger::SimpleFormatter.new # no timestamps
+      logger.level = ENV['AWS_LOGS_LOG_LEVEL'] || :info
+      logger
+    end
+
     def data(since="1d", quiet_not_found=false)
       since, now = Since.new(since).to_i, current_now
       resp = filter_log_events(since, now)
       resp.events
     rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
-      puts "WARN: #{e.class}: #{e.message}" unless quiet_not_found
+      logger.info "WARN: #{e.class}: #{e.message}" unless quiet_not_found
       []
     end
 
@@ -63,15 +72,15 @@ module AwsLogs
     rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
       if @wait_exists
         seconds = 5
-        puts "Waiting for log group #{@log_group_name} to exist. Waiting #{seconds} seconds."
+        logger.info "Waiting for log group #{@log_group_name} to exist. Waiting #{seconds} seconds."
         sleep seconds
         @wait_retries += 1
         if !@wait_exists_retries || @wait_retries < @wait_exists_retries
           retry
         end
       end
-      puts "ERROR: #{e.class}: #{e.message}".color(:red)
-      puts "Log group #{@log_group_name} not found."
+      logger.info "ERROR: #{e.class}: #{e.message}".color(:red)
+      logger.info "Log group #{@log_group_name} not found."
     end
 
     # TODO: lazy Enum or else its seems stuck for long --since
@@ -131,11 +140,11 @@ module AwsLogs
       return unless follow_until
 
       messages = @events.map(&:message)
-      @@end_loop_signal = messages.detect { |m| m.include?(follow_until) }
+      @end_loop_signal = messages.detect { |m| m.include?(follow_until) }
     end
 
     def say(text)
-      ENV["AWS_LOGS_TEST"] ? @output << text : puts(text)
+      ENV["AWS_LOGS_TEST"] ? @output << text : logger.info(text)
     end
 
     def output
@@ -144,6 +153,7 @@ module AwsLogs
 
     def set_trap
       Signal.trap("INT") {
+        # puts must be used here instead of logger.info or else get Thread-safe error
         puts "\nCtrl-C detected. Exiting..."
         exit # immediate exit
       }
@@ -152,9 +162,16 @@ module AwsLogs
     # The stop_follow! results in a little waiting because it signals to break the polling loop.
     # Since it's in the middle of the loop process, the loop will finish the sleep 5 first.
     # So it can pause from 0-5 seconds.
-    @@end_loop_signal = false
+    def stop_follow!
+      @end_loop_signal = true
+    end
+
+    # For backwards compatibility. This is not thread-safe.
+    @@global_end_loop_signal = false
     def self.stop_follow!
-      @@end_loop_signal = true
+      raise "stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
+      # puts "WARN: AwsLogs::Tail.stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
+      # @@global_end_loop_signal = true
     end
 
   private
@@ -169,7 +186,8 @@ module AwsLogs
     end
 
     def end_loop?
-      return true if @@end_loop_signal
+      return true if @@global_end_loop_signal
+      return true if @end_loop_signal
       max_loop_count && @loop_count >= max_loop_count
     end
 
