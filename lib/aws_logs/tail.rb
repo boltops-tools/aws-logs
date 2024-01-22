@@ -3,7 +3,7 @@ require "json"
 module AwsLogs
   class Tail < Base
     attr_reader :logger
-    def initialize(options={})
+    def initialize(options = {})
       super
       # Setting to ensure matches default CLI option
       @follow = @options[:follow].nil? ? true : @options[:follow]
@@ -20,12 +20,18 @@ module AwsLogs
 
     def default_logger
       logger = ActiveSupport::Logger.new($stdout)
-      logger.formatter = ActiveSupport::Logger::SimpleFormatter.new # no timestamps
-      logger.level = ENV['AWS_LOGS_LOG_LEVEL'] || :info
+      # The ActiveSupport::Logger::SimpleFormatter always adds extra lines to the output,
+      # unlike puts, which only adds a newline if it's needed.
+      # We want the simpler puts behavior.
+      logger.formatter = proc { |severity, timestamp, progname, msg|
+        msg = "#{msg}\n" unless msg.end_with?("\n")
+        "#{msg}"
+      }
+      logger.level = ENV["AWS_LOGS_LOG_LEVEL"] || :info
       logger
     end
 
-    def data(since="1d", quiet_not_found=false)
+    def data(since = "1d", quiet_not_found = false)
       since, now = Since.new(since).to_i, current_now
       resp = filter_log_events(since, now)
       resp.events
@@ -51,7 +57,7 @@ module AwsLogs
       # We overlap the sliding window because CloudWatch logs can receive or send the logs out of order.
       # For example, a bunch of logs can all come in at the same second, but they haven't registered to CloudWatch logs
       # yet. If we don't overlap the sliding window then we'll miss the logs that were delayed in registering.
-      overlap = 60*1000 # overlap the sliding window by a minute
+      overlap = 60 * 1000 # overlap the sliding window by a minute
       since, now = initial_since, current_now
       @wait_retries ||= 0
       until end_loop?
@@ -71,17 +77,23 @@ module AwsLogs
       display
     rescue Aws::CloudWatchLogs::Errors::ResourceNotFoundException => e
       if @wait_exists
-        seconds = 5
-        logger.info "Waiting for log group #{@log_group_name} to exist. Waiting #{seconds} seconds."
+        seconds = Integer(@options[:wait_exists_seconds] || 5)
+        unless @@waiting_already_shown
+          logger.info "Waiting for log group to exist: #{@log_group_name}"
+          @@waiting_already_shown = true
+        end
         sleep seconds
         @wait_retries += 1
+        logger.info "Waiting #{seconds} seconds. #{@wait_retries} of #{@wait_exists_retries} retries"
         if !@wait_exists_retries || @wait_retries < @wait_exists_retries
           retry
         end
+        logger.info "Giving up waiting for log group to exist"
       end
       logger.info "ERROR: #{e.class}: #{e.message}".color(:red)
       logger.info "Log group #{@log_group_name} not found."
     end
+    @@waiting_already_shown = false
 
     # TODO: lazy Enum or else its seems stuck for long --since
     def refresh_events(start_time, end_time)
@@ -98,11 +110,11 @@ module AwsLogs
       @events
     end
 
-    def filter_log_events(start_time, end_time, next_token=nil)
+    def filter_log_events(start_time, end_time, next_token = nil)
       options = {
         log_group_name: @log_group_name, # required
         start_time: start_time,
-        end_time: end_time,
+        end_time: end_time
         # limit: 1000,
         # interleaved: true,
       }
@@ -121,15 +133,15 @@ module AwsLogs
       new_events = @events
       shown_index = new_events.find_index { |e| e.event_id == @last_shown_event&.event_id }
       if shown_index
-        new_events = @events[shown_index+1..-1] || []
+        new_events = @events[shown_index + 1..-1] || []
       end
 
       new_events.each do |e|
-        time = Time.at(e.timestamp/1000).utc.to_s.color(:green) unless @options[:format] == "plain"
+        time = Time.at(e.timestamp / 1000).utc.to_s.color(:green) unless @options[:format] == "plain"
         line = [time, e.message].compact
         format = @options[:format] || "detailed"
         line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
-        say line.join(' ') unless @options[:silence]
+        say line.join(" ") unless @options[:silence]
       end
       @last_shown_event = @events.last
       check_follow_until!
@@ -169,12 +181,12 @@ module AwsLogs
     # For backwards compatibility. This is not thread-safe.
     @@global_end_loop_signal = false
     def self.stop_follow!
-      raise "stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
-      # puts "WARN: AwsLogs::Tail.stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
-      # @@global_end_loop_signal = true
+      logger.info "WARN: AwsLogs::Tail.stop_follow! is deprecated. Use AwsLogs::Tail#stop_follow! instead which is thread-safe."
+      @@global_end_loop_signal = true
     end
 
-  private
+    private
+
     def initial_since
       since = @options[:since]
       seconds = since ? Since.new(since).to_i : Since::DEFAULT
@@ -182,7 +194,7 @@ module AwsLogs
     end
 
     def current_now
-      (Time.now.to_i) * 1000 # now in milliseconds
+      Time.now.to_i * 1000 # now in milliseconds
     end
 
     def end_loop?
