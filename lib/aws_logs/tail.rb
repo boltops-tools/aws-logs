@@ -20,10 +20,9 @@ module AwsLogs
 
     def default_logger
       logger = ActiveSupport::Logger.new($stdout)
-      # Note: The ActiveSupport::Logger::SimpleFormatter always adds a newline
-      # This adds a lot of extra lines to the output.
-      # It's slightly different behavior than puts which only adds a newline if
-      # it's not there. We want the the simpler puts behavior.
+      # The ActiveSupport::Logger::SimpleFormatter always adds extra lines to the output,
+      # unlike puts, which only adds a newline if it's needed.
+      # We want the simpler puts behavior.
       logger.formatter = proc { |severity, timestamp, progname, msg|
         msg = "#{msg}\n" unless msg.end_with?("\n")
         "#{msg}"
