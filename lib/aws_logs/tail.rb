@@ -129,6 +129,7 @@ module AwsLogs
 
     # There can be duplicated events as events can be written to the exact same timestamp.
     # So also track the last_shown_event and prevent duplicate log lines from re-appearing.
+    @@codebuild_complete = false
     def display
       new_events = @events
       shown_index = new_events.find_index { |e| e.event_id == @last_shown_event&.event_id }
@@ -141,10 +142,19 @@ module AwsLogs
         line = [time, e.message].compact
         format = @options[:format] || "detailed"
         line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
-        say line.join(" ") unless @options[:silence]
+
+        @@codebuild_complete ||= codebuild_complete?(e.message)
+        unless @@codebuild_complete && @options[:codebuild_complete] == "hide"
+          say line.join(" ") unless @options[:silence]
+        end
       end
       @last_shown_event = @events.last
       check_follow_until!
+    end
+
+    # [Container] 2024/03/27 02:35:32.086024 Phase complete: BUILD State: SUCCEEDED
+    def codebuild_complete?(message)
+      message.starts_with?("[Container]") && message.include?("Phase complete: BUILD")
     end
 
     def check_follow_until!
