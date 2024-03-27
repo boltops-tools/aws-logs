@@ -144,7 +144,7 @@ module AwsLogs
         line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
 
         @@codebuild_complete ||= codebuild_complete?(e.message)
-        unless @@codebuild_complete && @options[:hide_codebuild_complete]
+        unless @@codebuild_complete && @options[:codebuild_complete] == "hide"
           say line.join(" ") unless @options[:silence]
         end
       end
