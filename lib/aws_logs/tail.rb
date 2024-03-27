@@ -31,7 +31,7 @@ module AwsLogs
       logger
     end
 
-    def data(since = "1h", quiet_not_found = false)
+    def data(since = "24h", quiet_not_found = false)
       since, now = Since.new(since).to_i, current_now
       resp = filter_log_events(since, now)
       resp.events
@@ -141,10 +141,31 @@ module AwsLogs
         line = [time, e.message].compact
         format = @options[:format] || "detailed"
         line.insert(1, e.log_stream_name.color(:purple)) if format == "detailed"
-        say line.join(" ") unless @options[:silence]
+
+        filtered = show_if? ? show_if(e) : true
+        say line.join(" ") if !@options[:silence] && filtered
       end
       @last_shown_event = @events.last
       check_follow_until!
+    end
+
+    def show_if?
+      !@options[:show_if].nil?
+    end
+
+    def show_if(e)
+      filter = @options[:show_if]
+      case filter
+      when ->(f) { f.respond_to?(:call) }
+        filter.call(e)
+      else
+        filter # true or false
+      end
+    end
+
+    # [Container] 2024/03/27 02:35:32.086024 Phase complete: BUILD State: SUCCEEDED
+    def codebuild_complete?(message)
+      message.starts_with?("[Container]") && message.include?("Phase complete: BUILD")
     end
 
     def check_follow_until!
