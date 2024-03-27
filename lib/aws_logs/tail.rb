@@ -31,7 +31,7 @@ module AwsLogs
       logger
     end
 
-    def data(since = "1d", quiet_not_found = false)
+    def data(since = "1h", quiet_not_found = false)
       since, now = Since.new(since).to_i, current_now
       resp = filter_log_events(since, now)
       resp.events
