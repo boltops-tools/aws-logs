@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 This project *tries* to adhere to [Semantic Versioning](http://semver.org/), even before v1.0.
 
+## [1.0.0] - 2024-04-16
+- [#7](https://github.com/tongueroo/aws-logs/pull/7) show if filter, plain default, thread-safe improvements
+- change follow to false by default
+- custom formatter for puts behavior
+- plain format support and fix sliding window
+- show_if filter to customize output
+- thread-safe logger file option
+
 ## [0.5.1] - 2023-11-22
 - [#6](https://github.com/tongueroo/aws-logs/pull/6) fix eager load
 
